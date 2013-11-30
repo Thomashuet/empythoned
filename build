@@ -8,8 +8,9 @@
 OPTIMIZED=1
 
 # Commands to use for various compilation steps.
-LLVM=/home/max/emscripten-workspace/llvm-build/Release/bin/
-PYTHON=python2
+EMCC=`pwd`/emscripten/emcc
+
+VERSION='3.4'
 
 # Which modules to build dynamically.
 # Maps each module name to the C files implementing it.
@@ -115,7 +116,7 @@ function build_module {
   ../ccproxy.py $FILES -o $1.so.bc
 
   # Emscript.
-  $PYTHON ../emscripten/emscripten.py $1.so.bc \
+  $EMCC $1.so.bc \
       -o $1.so.js \
       -s BUILD_AS_SHARED_LIB=1 \
       -s EXPORTED_FUNCTIONS="[\"_init$1\"]" \
@@ -127,7 +128,7 @@ function build_module {
   ../emscripten/tools/eliminator/node_modules/coffee-script/bin/coffee ../emscripten/tools/eliminator/eliminator.coffee < $1.so.js > $1.so.elim.js 2>/dev/null
 
   # Copy the new module to dist.
-  cp $1.so.elim.js ../dist/lib/python2.7/$1.so.js
+  cp $1.so.elim.js ../dist/lib/python$VERSION/$1.so.js
 }
 
 ################################################################################
@@ -182,15 +183,15 @@ make
 echo 'Relinking...'
 mkdir -p relinked
 cd relinked
-ar x ../libpython2.7.a
+ar x ../libpython$(VERSION).a
 rm main.o
-${LLVM}/llvm-link -o=python.bc *.o
+llvm-link -o=python.bc *.o
 cp python.bc ..
 cd ..
 
 # Compile the bytecode into JS using Emscripten.
 echo 'Emscripting...'
-$PYTHON ../emscripten/emscripten.py python.bc \
+$EMCC python.bc \
     -m \
     -o python.js \
     -s INVOKE_RUN=0 \
@@ -204,25 +205,25 @@ cp python.js ../dist/python.js
 
 # Copy the pure Python modules to dist.
 mkdir -p ../dist/lib
-mkdir -p ../dist/lib/python2.7
-cp -r ../cpython/Lib/* ../dist/lib/python2.7
-rm -rf ../dist/lib/python2.7/{idlelib,lib-tk,multiprocessing,curses,bsddb}
-rm -rf ../dist/lib/python2.7/plat-{aix3,aix4,atheos,beos5,darwin,freebsd4,freebsd5,freebsd6,freebsd7,freebsd8,generic,irix5,irix6,mac,netbsd1,next3,os2emx,riscos,sunos5,unixware7}
+mkdir -p ../dist/lib/python$VERSION
+cp -r ../cpython/Lib/* ../dist/lib/python$VERSION
+rm -rf ../dist/lib/python$VERSION/{idlelib,lib-tk,multiprocessing,curses,bsddb}
+rm -rf ../dist/lib/python$VERSION/plat-{aix3,aix4,atheos,beos5,darwin,freebsd4,freebsd5,freebsd6,freebsd7,freebsd8,generic,irix5,irix6,mac,netbsd1,next3,os2emx,riscos,sunos5,unixware7}
 if [ $OPTIMIZED -eq 1 ]; then
-  rm -rf ../dist/lib/python2.7/test
-  rm -rf ../dist/lib/python2.7/*/test{,s}
+  rm -rf ../dist/lib/python$VERSION/test
+  rm -rf ../dist/lib/python$VERSION/*/test{,s}
 fi
-find ../dist -name '*.pyc' | xargs rm
+find ../dist -name '*.pyc' | xargs rm -f
 # Make sure everything is readable and folders are executable (browseable).
 chmod -R ugo+rX ../dist
 
 # Copy the configs.
-mkdir -p ../dist/lib/python2.7/config
-cp Makefile Modules/{Setup*,config.c} ../dist/lib/python2.7/config
-cp ../cpython/{Modules/{config.c.in,makesetup},install-sh} ../dist/lib/python2.7/config
+mkdir -p ../dist/lib/python$VERSION/config
+cp Makefile Modules/{Setup*,config.c} ../dist/lib/python$VERSION/config
+cp ../cpython/{Modules/{config.c.in,makesetup},install-sh} ../dist/lib/python$VERSION/config
 mkdir -p ../dist/include
-mkdir -p ../dist/include/python2.7
-cp pyconfig.h ../dist/include/python2.7/
+mkdir -p ../dist/include/python$VERSION
+cp pyconfig.h ../dist/include/python$VERSION/
 
 # Build dynamically loaded modules.
 echo 'Building dynamic modules...'

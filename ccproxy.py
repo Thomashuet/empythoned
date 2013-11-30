@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/python
 
 from __future__ import with_statement
 
@@ -9,9 +9,11 @@ import sys
 
 # LLVM commands.
 # TODO: Factor out to be configurable from ./build.
-CC = '/home/max/emscripten-workspace/llvm-gcc-install/bin/llvm-gcc'
-LINK = '/home/max/emscripten-workspace/llvm-build/Release/bin/llvm-link'
-LLC = '/home/max/emscripten-workspace/llvm-build/Release/bin/llc'
+CC = 'clang'
+LINK = 'llvm-link'
+LLC = 'llc'
+
+LIBPYTHON = 'libpython3.4.a'
 
 # Argument filters.
 SKIPPED_CC_ARGS = [
@@ -83,7 +85,7 @@ with open('ccproxy.log', 'a') as log:
     # Redirect any program name queries to us.
     print sys.argv[0]
     ret = 0
-  elif call == LINK and 'libpython2.7.a' in sys.argv:
+  elif call == LINK and LIBPYTHON in sys.argv:
     # We don't care about the final Python binary. Create a fake.
     fake_python_file = open('python', 'w')
     fake_python_file.write('#!/bin/bash\n')
