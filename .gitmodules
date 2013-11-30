@@ -1,0 +1,6 @@
+[submodule "emscripten"]
+	path = emscripten
+	url = git@github.com:kripken/emscripten.git
+[submodule "cpython"]
+	path = cpython
+	url = git@github.com:akheron/cpython.git
